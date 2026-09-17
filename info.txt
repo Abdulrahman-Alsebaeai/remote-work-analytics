@@ -1,0 +1,44 @@
+
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-local.ps1
+
+admin@example.com
+AdminRemoteWork_2026!
+
+
+
+abdullah.nasser@example.com
+sara.alharbi@example.com
+omar.khalid@example.com
+noura.ahmed@example.com
+fahad.alqahtani@example.com
+layan.mohammed@example.com
+yousef.ali@example.com3
+reem.hassan@example.com
+khalid.saleh@example.com
+huda.ibrahim@example.com
+Employee@2026!
+
+ايقاف التنفبذ
+$webProcessIds = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique; if ($webProcessIds) { Get-Process -Id $webProcessIds; Stop-Process -Id $webProcessIds -Force; Write-Host "تم إيقاف خادم المنفذ 3000 بنجاح." -ForegroundColor Green } else { Write-Host "لا توجد عملية تعمل على المنفذ 3000." -ForegroundColor Yellow }
+تنفيذ الويب فقط
+npm run dev -w @remote-work/web
+
+لفتح قاعدة البيانات
+
+cd .\apps\api
+npx prisma studio
+
+
+لتصدير قاعدة البيانات
+mysqldump -h 127.0.0.1 -P 3310 -u remote_work -p --single-transaction --routines --triggers remote_work --result-file="remote_work_backup.sql"
+LocalRemoteWork_2026_Strong
+وسيتم إنشاء الملف:
+
+remote_work_backup.sql
+
+في نفس المجلد الذي أنت واقف فيه في PowerShell.
+
+لتشغيل المشروع
+powershell -ExecutionPolicy Bypass -File .\scripts\start-local.ps1
+
+rustdesk

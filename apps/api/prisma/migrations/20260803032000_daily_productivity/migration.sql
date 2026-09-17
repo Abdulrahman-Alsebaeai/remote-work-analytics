@@ -1,0 +1,23 @@
+CREATE TABLE `daily_productivity` (
+  `id` CHAR(36) NOT NULL,
+  `organization_id` CHAR(36) NOT NULL,
+  `employee_id` CHAR(36) NOT NULL,
+  `date` DATE NOT NULL,
+  `tracked_seconds` INTEGER NOT NULL,
+  `active_seconds` INTEGER NOT NULL,
+  `idle_seconds` INTEGER NOT NULL,
+  `window_switches` INTEGER NOT NULL,
+  `keyboard_activity` INTEGER NOT NULL,
+  `mouse_activity` INTEGER NOT NULL,
+  `productivity_score` TINYINT UNSIGNED NOT NULL,
+  `focus_score` TINYINT UNSIGNED NOT NULL,
+  `application_usage` JSON NOT NULL,
+  `website_usage` JSON NOT NULL,
+  `calculated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  UNIQUE INDEX `daily_productivity_organization_id_employee_id_date_key`(`organization_id`, `employee_id`, `date`),
+  INDEX `daily_productivity_organization_id_date_idx`(`organization_id`, `date`),
+  INDEX `daily_productivity_employee_id_date_idx`(`employee_id`, `date`),
+  CONSTRAINT `daily_productivity_organization_id_fkey` FOREIGN KEY (`organization_id`) REFERENCES `organizations`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `daily_productivity_employee_id_fkey` FOREIGN KEY (`employee_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

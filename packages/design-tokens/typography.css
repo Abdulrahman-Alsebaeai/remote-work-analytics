@@ -1,0 +1,60 @@
+/* Shared semantic typography tokens for the web application and Windows agent. */
+:root {
+  --type-display: clamp(3rem, 5.2vw, 5.15rem);
+  --type-h1: clamp(2rem, 3.4vw, 2.85rem);
+  --type-h2: 1.0rem;
+  --type-h3: 1.125rem;
+  --type-body-lg: 1rem;
+  --type-body: 0.875rem;
+  --type-small: 0.75rem;
+  --type-caption: 0.6875rem;
+  --type-preview: 6px;
+}
+
+:root[data-typography-scale="compact"] {
+  --type-display: clamp(2.7rem, 4.7vw, 4.65rem);
+  --type-h1: clamp(1.8rem, 3.1vw, 2.55rem);
+  --type-h2: 1.15rem;
+  --type-h3: 1.0125rem;
+  --type-body-lg: 0.9rem;
+  --type-body: 0.7875rem;
+  --type-small: 0.675rem;
+  --type-caption: 0.61875rem;
+  --type-preview: 5.4px;
+}
+
+:root[data-typography-scale="comfortable"] {
+  --type-display: clamp(2.3rem, 4.7vw, 4.0rem);
+  --type-h1: clamp(1.5rem, 2.3vw, 2.2rem);
+  --type-h2: 1.35rem;
+  --type-h3: 1.2375rem;
+  --type-body-lg: 1.1rem;
+  --type-body: 0.9625rem;
+  --type-small: 0.825rem;
+  --type-caption: 0.75625rem;
+  --type-preview: 6.6px;
+}
+
+:root[data-typography-scale="large"] {
+  --type-display: clamp(3.6rem, 6.2vw, 6.2rem);
+  --type-h1: clamp(2.4rem, 4.1vw, 3.4rem);
+  --type-h2: 1.6rem;
+  --type-h3: 1.35rem;
+  --type-body-lg: 1.2rem;
+  --type-body: 1.05rem;
+  --type-small: 0.9rem;
+  --type-caption: 0.825rem;
+  --type-preview: 7.2px;
+}
+
+body { font-size: var(--type-body-lg); }
+h1 { font-size: var(--type-h1); }
+h2 { font-size: var(--type-h2); }
+h3 { font-size: var(--type-h3); }
+p { font-size: var(--type-body-lg); }
+small { font-size: var(--type-caption); }
+th { font-size: var(--type-small); }
+button,
+input,
+select,
+textarea { font-size: var(--type-body); }

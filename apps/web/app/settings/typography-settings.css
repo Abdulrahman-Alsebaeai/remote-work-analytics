@@ -1,0 +1,134 @@
+.organization-readonly {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--warning) 24%, var(--border));
+  border-radius: 11px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: var(--type-small);
+  font-weight: 700;
+}
+
+.typography-setting {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.typography-setting-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.typography-setting-copy strong {
+  font-size: var(--type-body);
+}
+
+.typography-setting-copy small {
+  color: var(--muted);
+  font-size: var(--type-caption);
+  line-height: 1.6;
+}
+
+.typography-scale-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.typography-scale-options button {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-soft);
+  color: var(--text);
+  text-align: start;
+  transform: none;
+}
+
+.typography-scale-options button:hover:not(:disabled),
+.typography-scale-options button.selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.typography-scale-options button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.typography-scale-options button > span {
+  color: var(--primary);
+  font-size: var(--type-h3);
+  font-weight: 850;
+  line-height: 1;
+  transform-origin: center bottom;
+}
+
+.typography-scale-options button.compact > span { transform: scale(0.9); }
+.typography-scale-options button.comfortable > span { transform: scale(1.1); }
+.typography-scale-options button.large > span { transform: scale(1.2); }
+
+.typography-scale-options button > strong {
+  margin-top: 0.3rem;
+  font-size: var(--type-small);
+}
+
+.typography-scale-options button > small {
+  color: var(--muted);
+  font-size: var(--type-caption);
+}
+
+.typography-scale-options button > svg {
+  position: absolute;
+  inset-inline-end: 0.5rem;
+  inset-block-start: 0.5rem;
+  color: var(--primary);
+}
+
+.capture-frequency-setting {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(11rem, 15rem);
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.capture-frequency-setting > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.capture-frequency-setting strong {
+  font-size: var(--type-body);
+}
+
+.capture-frequency-setting small {
+  color: var(--muted);
+  font-size: var(--type-caption);
+  line-height: 1.6;
+}
+
+.capture-frequency-setting select {
+  width: 100%;
+}
+
+@media (max-width: 700px) {
+  .typography-scale-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .capture-frequency-setting {
+    grid-template-columns: 1fr;
+  }
+}

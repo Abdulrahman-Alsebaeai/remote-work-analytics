@@ -1,0 +1,24 @@
+[Unit]
+Description=Remote Work Analytics API
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=remote-work
+Group=remote-work
+WorkingDirectory=/opt/remote-work-analytics
+EnvironmentFile=/etc/remote-work/api.env
+ExecStartPre=/usr/bin/npx --no-install prisma migrate deploy --schema apps/api/prisma/schema.prisma
+ExecStart=/usr/bin/node apps/api/dist/main.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/remote-work/screenshots
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,424 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  CANCELLED
+}
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_UPDATED
+  DEADLINE_APPROACHING
+  SESSION_STARTED
+  SESSION_ENDED
+  AI_ANALYSIS_COMPLETED
+}
+enum WorkSessionStatus {
+  ACTIVE
+  PAUSED
+  ENDED
+}
+enum AgentEventType {
+  SESSION_STARTED
+  SESSION_PAUSED
+  SESSION_RESUMED
+  SESSION_ENDED
+  ACTIVITY_SAMPLE
+}
+enum ActivityCategory {
+  WORK
+  COMMUNICATION
+  BROWSING
+  ENTERTAINMENT
+  IDLE
+  OTHER
+}
+enum ActivityResourceType {
+  APPLICATION
+  WEBSITE
+  FILE
+  FOLDER
+  WORKSPACE
+  OTHER
+}
+enum ProductivityClassification {
+  PRODUCTIVE
+  UNPRODUCTIVE
+  UNDEFINED
+}
+enum AiJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id           String         @id @default(uuid()) @db.Char(36)
+  email        String         @unique @db.VarChar(254)
+  passwordHash String         @map("password_hash") @db.VarChar(255)
+  displayName  String         @map("display_name") @db.VarChar(120)
+  role         UserRole       @default(EMPLOYEE)
+  status       UserStatus     @default(ACTIVE)
+  locale       String         @default("en") @db.VarChar(5)
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  tokens       RefreshToken[]
+  organizationId String?      @map("organization_id") @db.Char(36)
+  organization Organization?  @relation(fields: [organizationId], references: [id])
+  departmentId String?         @map("department_id") @db.Char(36)
+  department   Department?     @relation(fields: [departmentId], references: [id])
+  teamId       String?         @map("team_id") @db.Char(36)
+  team         Team?           @relation(fields: [teamId], references: [id])
+  auditEvents  AuditLog[]       @relation("AuditActor")
+  assignedTasks Task[]          @relation("TaskAssignee")
+  createdTasks  Task[]          @relation("TaskCreator")
+  taskNotes     TaskNote[]
+  notifications Notification[]
+  workSessions WorkSession[]
+  agentEvents AgentEvent[]
+  screenshotCaptures ScreenshotCapture[]
+  dailyProductivity DailyProductivity[]
+  aiAnalysisJobs AiAnalysisJob[] @relation("AiJobRequester")
+  activityClassifications ActivityClassification[]
+  activitySessions ActivitySession[]
+  @@index([role, status])
+  @@index([organizationId, role, status])
+  @@index([departmentId])
+  @@index([teamId])
+  @@map("users")
+}
+
+model Organization {
+  id          String       @id @default(uuid()) @db.Char(36)
+  name        String       @db.VarChar(160)
+  slug        String       @unique @db.VarChar(80)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  users       User[]
+  departments Department[]
+  teams       Team[]
+  auditLogs   AuditLog[]
+  tasks       Task[]
+  dailyProductivity DailyProductivity[]
+  aiAnalysisJobs AiAnalysisJob[]
+  activityClassifications ActivityClassification[]
+  activitySessions ActivitySession[]
+  settings    OrganizationSettings?
+  @@map("organizations")
+}
+
+model OrganizationSettings {
+  organizationId            String       @id @map("organization_id") @db.Char(36)
+  fontKey                   String       @default("cairo") @map("font_key") @db.VarChar(40)
+  typographyScale           String       @default("standard") @map("typography_scale") @db.VarChar(20)
+  screenshotIntervalSeconds Int          @default(300) @map("screenshot_interval_seconds")
+  createdAt                 DateTime     @default(now()) @map("created_at")
+  updatedAt                 DateTime     @updatedAt @map("updated_at")
+  organization              Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@map("organization_settings")
+}
+
+model Department {
+  id             String       @id @default(uuid()) @db.Char(36)
+  organizationId String       @map("organization_id") @db.Char(36)
+  name           String       @db.VarChar(120)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users          User[]
+  teams          Team[]
+  @@unique([organizationId, name])
+  @@map("departments")
+}
+
+model Team {
+  id             String       @id @default(uuid()) @db.Char(36)
+  organizationId String       @map("organization_id") @db.Char(36)
+  departmentId   String?      @map("department_id") @db.Char(36)
+  name           String       @db.VarChar(120)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department     Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  users          User[]
+  @@unique([organizationId, name])
+  @@index([departmentId])
+  @@map("teams")
+}
+
+model AuditLog {
+  id             String        @id @default(uuid()) @db.Char(36)
+  organizationId String?       @map("organization_id") @db.Char(36)
+  actorId        String?       @map("actor_id") @db.Char(36)
+  action         String        @db.VarChar(100)
+  targetType     String?       @map("target_type") @db.VarChar(80)
+  targetId       String?       @map("target_id") @db.VarChar(100)
+  result         String        @db.VarChar(30)
+  metadata       Json?
+  ipAddress      String?       @map("ip_address") @db.VarChar(45)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actor          User?         @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  @@index([organizationId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+model Task {
+  id             String       @id @default(uuid()) @db.Char(36)
+  organizationId String       @map("organization_id") @db.Char(36)
+  title          String       @db.VarChar(180)
+  description    String?      @db.Text
+  priority       TaskPriority @default(MEDIUM)
+  status         TaskStatus   @default(TODO)
+  progress       Int          @default(0) @db.UnsignedTinyInt
+  deadline       DateTime?
+  assigneeId     String       @map("assignee_id") @db.Char(36)
+  createdById    String       @map("created_by_id") @db.Char(36)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  deletedAt      DateTime?    @map("deleted_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignee       User         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdBy      User         @relation("TaskCreator", fields: [createdById], references: [id])
+  notes          TaskNote[]
+  @@index([organizationId, status, deadline])
+  @@index([assigneeId, status, deletedAt])
+  @@map("tasks")
+}
+
+model TaskNote {
+  id        String   @id @default(uuid()) @db.Char(36)
+  taskId    String   @map("task_id") @db.Char(36)
+  authorId  String   @map("author_id") @db.Char(36)
+  content   String   @db.VarChar(2000)
+  createdAt DateTime @default(now()) @map("created_at")
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id])
+  @@index([taskId, createdAt])
+  @@map("task_notes")
+}
+
+model Notification {
+  id             String           @id @default(uuid()) @db.Char(36)
+  organizationId String           @map("organization_id") @db.Char(36)
+  userId         String           @map("user_id") @db.Char(36)
+  type           NotificationType
+  titleKey       String           @map("title_key") @db.VarChar(100)
+  data           Json?
+  readAt         DateTime?        @map("read_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, readAt, createdAt])
+  @@index([organizationId, createdAt])
+  @@map("notifications")
+}
+
+model WorkSession {
+  id             String            @id @db.Char(36)
+  organizationId String            @map("organization_id") @db.Char(36)
+  employeeId     String            @map("employee_id") @db.Char(36)
+  status         WorkSessionStatus
+  startedAt      DateTime          @map("started_at")
+  endedAt        DateTime?         @map("ended_at")
+  lastEventAt    DateTime          @map("last_event_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  employee       User              @relation(fields: [employeeId], references: [id])
+  events         AgentEvent[]
+  screenshots    ScreenshotCapture[]
+  activities     ActivitySession[]
+  @@index([organizationId, startedAt])
+  @@index([employeeId, status])
+  @@map("work_sessions")
+}
+
+model AgentEvent {
+  id             String         @id @db.Char(36)
+  organizationId String         @map("organization_id") @db.Char(36)
+  employeeId     String         @map("employee_id") @db.Char(36)
+  sessionId      String         @map("session_id") @db.Char(36)
+  type           AgentEventType
+  occurredAt     DateTime       @map("occurred_at")
+  payload        Json?
+  receivedAt     DateTime       @default(now()) @map("received_at")
+  employee       User           @relation(fields: [employeeId], references: [id])
+  session        WorkSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  classification ActivityClassification?
+  @@index([organizationId, receivedAt])
+  @@index([sessionId, occurredAt])
+  @@map("agent_events")
+}
+
+model ScreenshotAsset {
+  id         String              @id @default(uuid()) @db.Char(36)
+  contentHash String             @unique @map("content_hash") @db.Char(64)
+  storageKey String              @map("storage_key") @db.VarChar(500)
+  mimeType   String              @map("mime_type") @db.VarChar(80)
+  byteSize   Int                 @map("byte_size")
+  width      Int
+  height     Int
+  thumbnailStorageKey String?          @map("thumbnail_storage_key") @db.VarChar(500)
+  thumbnailMimeType   String?          @map("thumbnail_mime_type") @db.VarChar(80)
+  thumbnailByteSize   Int?             @map("thumbnail_byte_size")
+  createdAt  DateTime            @default(now()) @map("created_at")
+  captures   ScreenshotCapture[]
+  @@map("screenshot_assets")
+}
+
+model ScreenshotCapture {
+  id             String          @id @default(uuid()) @db.Char(36)
+  organizationId String          @map("organization_id") @db.Char(36)
+  employeeId     String          @map("employee_id") @db.Char(36)
+  sessionId      String          @map("session_id") @db.Char(36)
+  assetId        String          @map("asset_id") @db.Char(36)
+  capturedAt     DateTime        @map("captured_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  employee       User            @relation(fields: [employeeId], references: [id])
+  session        WorkSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  asset          ScreenshotAsset @relation(fields: [assetId], references: [id])
+  @@unique([employeeId, sessionId, capturedAt])
+  @@index([organizationId, capturedAt])
+  @@index([organizationId, employeeId, capturedAt])
+  @@index([sessionId, capturedAt])
+  @@map("screenshot_captures")
+}
+
+model DailyProductivity {
+  id                 String       @id @default(uuid()) @db.Char(36)
+  organizationId     String       @map("organization_id") @db.Char(36)
+  employeeId         String       @map("employee_id") @db.Char(36)
+  date               DateTime     @db.Date
+  trackedSeconds     Int          @map("tracked_seconds")
+  activeSeconds      Int          @map("active_seconds")
+  idleSeconds        Int          @map("idle_seconds")
+  productiveSeconds   Int          @default(0) @map("productive_seconds")
+  unproductiveSeconds Int          @default(0) @map("unproductive_seconds")
+  undefinedSeconds    Int          @default(0) @map("undefined_seconds")
+  windowSwitches     Int          @map("window_switches")
+  keyboardActivity   Int          @map("keyboard_activity")
+  mouseActivity      Int          @map("mouse_activity")
+  productivityScore  Int          @map("productivity_score") @db.UnsignedTinyInt
+  focusScore         Int          @map("focus_score") @db.UnsignedTinyInt
+  applicationUsage   Json         @map("application_usage")
+  websiteUsage       Json         @map("website_usage")
+  calculatedAt       DateTime     @default(now()) @map("calculated_at")
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee           User         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  @@unique([organizationId, employeeId, date])
+  @@index([organizationId, date])
+  @@index([employeeId, date])
+  @@map("daily_productivity")
+}
+
+model ActivitySession {
+  id               String                     @id @db.Char(36)
+  organizationId   String                     @map("organization_id") @db.Char(36)
+  employeeId       String                     @map("employee_id") @db.Char(36)
+  sessionId        String                     @map("session_id") @db.Char(36)
+  resourceType     ActivityResourceType       @map("resource_type")
+  applicationName  String                     @map("application_name") @db.VarChar(160)
+  processName      String                     @map("process_name") @db.VarChar(160)
+  windowTitle      String?                    @map("window_title") @db.VarChar(1000)
+  resourceName     String?                    @map("resource_name") @db.VarChar(500)
+  contextName      String?                    @map("context_name") @db.VarChar(500)
+  url              String?                    @db.VarChar(2048)
+  domain           String?                    @db.VarChar(253)
+  startedAt        DateTime                   @map("started_at")
+  endedAt          DateTime                   @map("ended_at")
+  durationSeconds  Int                        @map("duration_seconds")
+  idleSeconds      Int                        @default(0) @map("idle_seconds")
+  keyboardActivity Int                        @default(0) @map("keyboard_activity")
+  mouseActivity    Int                        @default(0) @map("mouse_activity")
+  windowSwitches   Int                        @default(0) @map("window_switches")
+  classification   ProductivityClassification @default(UNDEFINED)
+  createdAt        DateTime                   @default(now()) @map("created_at")
+  updatedAt        DateTime                   @updatedAt @map("updated_at")
+  organization     Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee         User                       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  session          WorkSession                @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  @@index([organizationId, employeeId, startedAt])
+  @@index([organizationId, resourceType, startedAt])
+  @@index([employeeId, classification, startedAt])
+  @@index([sessionId, startedAt])
+  @@map("activity_sessions")
+}
+
+model ActivityClassification {
+  id             String           @id @default(uuid()) @db.Char(36)
+  organizationId String           @map("organization_id") @db.Char(36)
+  employeeId     String           @map("employee_id") @db.Char(36)
+  eventId        String           @unique @map("event_id") @db.Char(36)
+  category       ActivityCategory
+  confidence     Float
+  productive     Boolean
+  explanation    Json
+  modelKey       String           @map("model_key") @db.VarChar(80)
+  modelVersion   String           @map("model_version") @db.VarChar(40)
+  classifiedAt   DateTime         @default(now()) @map("classified_at")
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee       User             @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  event          AgentEvent       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  @@index([organizationId, classifiedAt])
+  @@index([employeeId, category, classifiedAt])
+  @@map("activity_classifications")
+}
+
+model AiAnalysisJob {
+  id             String       @id @default(uuid()) @db.Char(36)
+  organizationId String       @map("organization_id") @db.Char(36)
+  requestedById  String       @map("requested_by_id") @db.Char(36)
+  fromDate       DateTime     @map("from_date") @db.Date
+  toDate         DateTime     @map("to_date") @db.Date
+  status         AiJobStatus  @default(PENDING)
+  modelKey       String       @map("model_key") @db.VarChar(80)
+  modelVersion   String       @map("model_version") @db.VarChar(40)
+  summary        Json?
+  insights       Json?
+  recommendations Json?
+  errorMessage   String?      @map("error_message") @db.VarChar(500)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  startedAt      DateTime?    @map("started_at")
+  completedAt    DateTime?    @map("completed_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedBy    User         @relation("AiJobRequester", fields: [requestedById], references: [id])
+  @@index([organizationId, createdAt])
+  @@index([status, createdAt])
+  @@map("ai_analysis_jobs")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Char(36)
+  tokenHash String    @unique @map("token_hash") @db.Char(64)
+  userId    String    @map("user_id") @db.Char(36)
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, expiresAt])
+  @@map("refresh_tokens")
+}

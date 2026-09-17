@@ -1,0 +1,23 @@
+[Unit]
+Description=Remote Work Analytics Manager Web
+After=network-online.target remote-work-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=remote-work
+Group=remote-work
+WorkingDirectory=/opt/remote-work-analytics
+EnvironmentFile=/etc/remote-work/web.env
+ExecStart=/usr/bin/npm start --workspace @remote-work/web
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/remote-work-analytics/apps/web/.next/cache
+
+[Install]
+WantedBy=multi-user.target
